@@ -1,0 +1,180 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <iomanip>
+#include <algorithm>
+
+using namespace std;
+
+// Estructura de Cancha
+struct Cancha {
+	int id;
+	string tipo;
+	double precioPorHora;
+	bool disponible;
+};
+
+// Estructura de Reserva
+struct Reserva {
+	int idReserva;
+	string nombreCliente;
+	int idCancha;
+	string horario;
+};
+
+// Variables globales del sistema
+vector<Cancha> canchas;
+vector<Reserva> reservas;
+int contadorReservas = 101;
+
+void mostrarCanchasDisponibles() {
+	cout << "\n--- ESTADO DE LAS CANCHAS ---\n";
+	cout << left << setw(5) << "ID" << setw(15) << "Tipo" 
+		<< setw(15) << "Precio/Hora" << "Estado\n";
+	cout << "--------------------------------------------------\n";
+	for (const auto& c : canchas) {
+		cout << left << setw(5) << c.id 
+			<< setw(15) << c.tipo 
+			<< "$" << setw(14) << c.precioPorHora;
+		if (c.disponible) {
+			cout << "Disponible\n";
+		} else {
+			cout << "Ocupada\n";
+		}
+	}
+}
+
+void realizarReserva() {
+	string nombre, horario;
+	int idCancha;
+	
+	mostrarCanchasDisponibles();
+	
+	cout << "\nIngrese el ID de la cancha que desea reservar: ";
+	cin >> idCancha;
+	
+	bool canchaEncontrada = false;
+	for (auto& c : canchas) {
+		if (c.id == idCancha) {
+			canchaEncontrada = true;
+			if (!c.disponible) {
+				cout << "Error: La cancha seleccionada ya esta ocupada.\n";
+				return;
+			}
+			
+			cout << "Ingrese su nombre completo: ";
+			cin.ignore();
+			getline(cin, nombre);
+			
+			cout << "Ingrese el bloque horario (Ej: 14:00-15:00): ";
+			getline(cin, horario);
+			
+			// Guardar la reserva en el vector
+			reservas.push_back({contadorReservas, nombre, idCancha, horario});
+			c.disponible = false; // Actualizar estado de la cancha
+			
+			cout << "\n¡Reserva registrada con exito!\n";
+			cout << "Su numero de reserva es: " << contadorReservas << "\n";
+			contadorReservas++;
+			break;
+		}
+	}
+	
+	if (!canchaEncontrada) {
+		cout << "Error: El ID ingresado no corresponde a ninguna cancha.\n";
+	}
+}
+
+void mostrarReservas() {
+	if (reservas.empty()) {
+		cout << "\nNo hay reservas registradas en el sistema en este momento.\n";
+		return;
+	}
+	
+	cout << "\n--- LISTA DE RESERVAS ACTIVAS ---\n";
+	cout << left << setw(12) << "ID Reserva" << setw(20) << "Cliente" 
+		<< setw(12) << "ID Cancha" << "Horario\n";
+	cout << "------------------------------------------------------------\n";
+	for (const auto& r : reservas) {
+		cout << left << setw(12) << r.idReserva 
+			<< setw(20) << r.nombreCliente 
+			<< setw(12) << r.idCancha 
+			<< r.horario << "\n";
+	}
+}
+
+void cancelarReserva() {
+	if (reservas.empty()) {
+		cout << "\nNo hay reservas activas para cancelar.\n";
+		return;
+	}
+	
+	int idReserva;
+	cout << "\nIngrese el numero de la reserva que desea cancelar: ";
+	cin >> idReserva;
+	
+	bool encontrada = false;
+	for (auto it = reservas.begin(); it != reservas.end(); ++it) {
+		if (it->idReserva == idReserva) {
+			encontrada = true;
+			// Buscar la cancha asociada y liberarla
+			for (auto& c : canchas) {
+				if (c.id == it->idCancha) {
+					c.disponible = true;
+					break;
+				}
+			}
+			// Borrar la reserva de la memoria
+			reservas.erase(it);
+			cout << "Reserva cancelada exitosamente. La cancha esta libre de nuevo.\n";
+			break;
+		}
+	}
+	
+	if (!encontrada) {
+		cout << "Error: No se encontro ninguna reserva con ese numero.\n";
+	}
+}
+
+int main() {
+	// Inicializar algunas canchas por defecto
+	canchas.push_back({1, "Futbol 5", 50.0, true});
+	canchas.push_back({2, "Tenis", 35.0, true});
+	canchas.push_back({3, "Padel", 40.0, true});
+	
+	int opcion = 0;
+	do {
+		cout << "\n====================================\n";
+		cout << "   SISTEMA DE RESERVA DE CANCHAS    \n";
+		cout << "====================================\n";
+		cout << "1. Ver estado de canchas\n";
+		cout << "2. Realizar reserva\n";
+		cout << "3. Ver reservas activas\n";
+		cout << "4. Cancelar reserva\n";
+		cout << "5. Salir\n";
+		cout << "Elija una opcion: ";
+		cin >> opcion;
+		
+		switch (opcion) {
+		case 1:
+			mostrarCanchasDisponibles();
+			break;
+		case 2:
+			realizarReserva();
+			break;
+		case 3:
+			mostrarReservas();
+			break;
+		case 4:
+			cancelarReserva();
+			break;
+		case 5:
+			cout << "Saliendo del sistema...\n";
+			break;
+		default:
+			cout << "Opcion no valida. Intente de nuevo.\n";
+		}
+	} while (opcion != 5);
+	
+	return 0;
+}
